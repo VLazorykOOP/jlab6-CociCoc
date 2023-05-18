@@ -1,125 +1,173 @@
-import java.awt.*;
-import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
 
-class Clock {
-    private int hour;
-    private int minute;
-
-    public Clock(int hour, int minute) {
-        this.hour = hour;
-        this.minute = minute;
-    }
-
-    public int getHour() {
-        return hour;
-    }
-
-    public int getMinute() {
-        return minute;
-    }
-
-    public void incrementHour() {
-        hour = (hour + 1) % 24;
-    }
-
-    public void decrementHour() {
-        hour = (hour + 23) % 24;
-    }
-
-    public void incrementMinute() {
-        minute = (minute + 1) % 60;
-        if (minute == 0) {
-            incrementHour();
-        }
-    }
-
-    public void decrementMinute() {
-        minute = (minute + 59) % 60;
-        if (minute == 59) {
-            decrementHour();
-        }
-    }
-}
-
-class ClockPanel extends JPanel {
-    private Clock clock;
+public class Main extends JFrame {
+    private JPanel panel;
     private JLabel label;
+    private JTextField textField;
+    private JButton button;
+    private JTable table;
+    private JLabel resultLabel;
+    private JButton resultButton;
+    private JButton clearButton; // Added clear button
 
-    public ClockPanel(Clock clock) {
-        this.clock = clock;
-        label = new JLabel(getTimeString(), SwingConstants.CENTER);
-        label.setFont(new Font("Arial", Font.PLAIN, 40));
-        add(label);
-    }
+    public Main() {
+        // Set properties of the JFrame
+        setTitle("Matrix Operations");
+        setSize(600, 500);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-    public void updateClock() {
-        label.setText(getTimeString());
-    }
+        // Create a new JPanel and set its layout
+        panel = new JPanel();
+        panel.setLayout(new BorderLayout());
 
-    private String getTimeString() {
-        return String.format("%02d:%02d", clock.getHour(), clock.getMinute());
-    }
-}
+        // Create a label and a text field for the input
+        label = new JLabel("Enter the value of n (<=20):");
+        textField = new JTextField(10);
 
-class ButtonPanel extends JPanel {
-    private Clock clock;
+        // Create a button for the input
+        button = new JButton("Enter");
+        button.addActionListener(e -> {
+            processInput();
+        });
 
-    public ButtonPanel(Clock clock) {
-        this.clock = clock;
-        setLayout(new GridLayout(2, 2, 10, 10));
+        // Add the label, text field, and button to the panel
+        JPanel inputPanel = new JPanel();
+        inputPanel.add(label);
+        inputPanel.add(textField);
+        inputPanel.add(button);
+        panel.add(inputPanel, BorderLayout.NORTH);
 
-        JButton incHourButton = new JButton("+ Hour");
-        incHourButton.addActionListener(new ActionListener() {
+        // Create a JTable for displaying the matrix
+        table = new JTable();
+        JScrollPane scrollPane = new JScrollPane(table);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        // Create a label and a button for displaying the result
+        resultLabel = new JLabel("");
+        resultButton = new JButton("Process");
+        resultButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
-                clock.incrementHour();
-                ((ClockPanel) getParent().getComponent(0)).updateClock();
+                processResult();
             }
         });
-        add(incHourButton);
 
-        JButton decHourButton = new JButton("- Hour");
-        decHourButton.addActionListener(new ActionListener() {
+        // Add the result label and button to the panel
+        JPanel resultPanel = new JPanel();
+        resultPanel.add(resultLabel);
+        resultPanel.add(resultButton);
+        panel.add(resultPanel, BorderLayout.SOUTH);
+
+        // Create a clear button
+        clearButton = new JButton("Clear");
+        clearButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
-                clock.decrementHour();
-                ((ClockPanel) getParent().getComponent(0)).updateClock();
+                clearTable();
             }
         });
-        add(decHourButton);
 
-        JButton incMinButton = new JButton("+ Minute");
-        incMinButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                clock.incrementMinute();
-                ((ClockPanel) getParent().getComponent(0)).updateClock();
-            }
-        });
-        add(incMinButton);
+        // Add the clear button to the panel
+        panel.add(clearButton, BorderLayout.WEST);
 
-        JButton decMinButton = new JButton("- Minute");
-        decMinButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                clock.decrementMinute();
-                ((ClockPanel) getParent().getComponent(0)).updateClock();
-            }
-        });
-        add(decMinButton);
+        // Add the panel to the JFrame
+        add(panel);
     }
-}
 
-public class Main {
+    private void processInput() {
+        int n = Integer.parseInt(textField.getText());
+        // Process input
+    }
+
+    private void processResult() {
+        int n = Integer.parseInt(textField.getText());
+        // Process input
+        try {
+            File inputFile = new File("input.txt");
+            Scanner input = new Scanner(inputFile);
+            int[][] A = new int[n][n];
+            int minIndex = 0;
+            int minElement = Integer.MAX_VALUE;
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    A[i][j] = input.nextInt();
+                    if (A[i][j] < minElement) {
+                        minElement = A[i][j];
+                        minIndex = j;
+                    }
+                }
+            }
+            input.close();
+            // Shift the columns of the matrix so that the column with the minimum element is first
+            for (int i = 0; i < n; i++) {
+                int[] temp = new int[n];
+                for (int j = 0; j < n; j++) {
+                    temp[j] = A[i][(j + minIndex) % n];
+                }
+                A[i] = temp;
+            }
+            // Populate the JTable with data from the file
+            String[] columnNames = new String[n];
+            for (int i = 0; i < n; i++) {
+                columnNames[i] = "Column " + (i + 1);
+            }
+            DefaultTableModel model = new DefaultTableModel(columnNames, n);
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    model.setValueAt(A[i][j], i, j);
+                }
+            }
+            table.setModel(model);
+            // Calculate the determinant of the matrix
+            int det = calculateDeterminant(A);
+            // Set the result label to display the determinant
+            resultLabel.setText("Determinant = " + det);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private int calculateDeterminant(int[][] A) {
+        int n = A.length;
+        if (n == 1) {
+            return A[0][0];
+        }
+        if (n == 2) {
+            return A[0][0] * A[1][1] - A[0][1] * A[1][0];
+        }
+        int det = 0;
+        for (int i = 0; i < n; i++) {
+            int[][] submatrix = new int[n - 1][n - 1];
+            for (int j = 1; j < n; j++) {
+                for (int k = 0; k < n; k++) {
+                    if (k < i) {
+                        submatrix[j - 1][k] = A[j][k];
+                    } else if (k > i) {
+                        submatrix[j - 1][k - 1] = A[j][k];
+                    }
+                }
+            }
+            det += Math.pow(-1, i) * A[0][i] * calculateDeterminant(submatrix);
+        }
+        return det;
+    }
+
+    private void clearTable() {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        model.setRowCount(0);
+        model.setColumnCount(0);
+        resultLabel.setText("");
+    }
+
     public static void main(String[] args) {
-        Clock clock = new Clock(12, 0);
-        JFrame frame = new JFrame("Analog Clock");
-
-        ClockPanel clockPanel = new ClockPanel(clock);
-        frame.add(clockPanel, BorderLayout.CENTER);
-
-        ButtonPanel buttonPanel = new ButtonPanel(clock);
-        frame.add(buttonPanel, BorderLayout.SOUTH);
-
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
-        frame.setVisible(true);
+        Main main = new Main();
+        main.setVisible(true);
     }
 }
